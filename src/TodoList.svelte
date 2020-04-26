@@ -4,33 +4,30 @@
   let list = []
   let editItem
   let editId = -1
+  let nextTextVal
   const onAdd = () => {
     const id = createId()
-    list.push({ id, value: id})
+    list.push({ id, _id: id, value: id})
     list = list
   }
   const onTextChange = (event, id) => {
-    const editIndex = list.findIndex( item => item.id === id)
-    if (editIndex > -1) {
-      editItem = { id, value: event.target.value }
-    }
+    nextTextVal = event.target.value
   }
   const onEdit = (id) => {
     if (editId === id) {
-      let index = list.findIndex( item => item.id === editId)
-      if (index > -1) {
-        const nextList = list.map( item => {
-          if (item.id === editItem.id) {
-            return editItem
-          }
-          return item
-        })
-        list = nextList
-      }
       editId = -1
       return
     }
     editId = id
+  }
+  const onSave = (id, listItem) => {
+    const editIndex = list.findIndex( item => item.id === id)
+    if (editIndex > -1) {
+      // internal "_id" is contrived to force the list to re-render on list item update
+      list[editIndex] = {id: listItem.id, _id: createId(), value: nextTextVal || listItem.value}
+      nextTextVal = ''
+      editId = -1
+    }
   }
   const onRemove = (id) => {
     const foundIndex = list.findIndex( item => item.id === id)
@@ -40,8 +37,9 @@
 
 <div>
   <button on:click={onAdd}>Add Item</button>
-  {#each list as listItem (listItem.id)}
+  {#each list as listItem (listItem._id)}
     <TodoListItem
+      onSave={onSave}
       onTextChange={onTextChange}
       canEdit={listItem.id === editId}
       listItem={listItem}
